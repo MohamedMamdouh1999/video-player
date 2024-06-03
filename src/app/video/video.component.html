@@ -1,0 +1,83 @@
+<section>
+     <div #videoContainer dir="ltr" class="video-container d-flex align-items-center mx-auto position-relative" [attr.data-volume-level]="volumeLevel" [ngClass]="{'paused': !isPlay, 'caption': currentLabel !== 'off','intro-radius': isIntro}">
+          <div (mouseenter)="showHideControls()" (mouseleave)="showHideControls()" [ngClass]="{'intro-radius': isIntro, 'opacity-0': !toggleControls, 'opacity-100': toggleControls}" class="video-title position-absolute top-0 start-0 end-0 text-white">{{title}}</div>
+          <div *ngIf="forward" class="video-skip forward position-absolute top-50 translate-middle-y rounded-circle text-white d-flex flex-column align-items-center justify-content-center">
+               <i class="fa-solid fa-forward fa-2x"></i>
+               <span>{{timeSkip}} Seconds</span>
+          </div>
+          <div *ngIf="backward" class="video-skip backward position-absolute top-50 translate-middle-y rounded-circle text-white d-flex flex-column align-items-center justify-content-center">
+               <i class="fa-solid fa-backward fa-2x"></i>
+               <span>{{timeSkip}} Seconds</span>
+          </div>
+          <div (mouseenter)="showHideControls()" (mouseleave)="showHideControls()" [ngClass]="toggleControls ? 'opacity-100' : 'opacity-0'" [hidden]="isIntro" class="video-controls-container start-0 end-0 bottom-0 text-white position-absolute">
+               <div #timelineContainer (mousemove)="handleTimelineUpdate($event)" (mousedown)="toggleScrubbing($event)" class="timeline-container d-flex align-items-center position-relative">
+                    <div class="timeline position-relative w-100 overflow-x-hidden">
+                         <div (mouseenter)="showProgressInfo = true" (mouseleave)="showProgressInfo = false" class="timeline-progress-counter position-absolute top-0 bottom-0 h-100" [ngClass]="{'translate-middle-x': progress > 40}" [ngStyle]="{'left': progress + '%', 'background-color': progress > +videoProgress ? 'blue' : 'red'}"></div>
+                    </div>
+                    <span *ngIf="showProgressInfo" class="timeline-progress-info d-block position-absolute bottom-100 text-white px-1 rounded text-nowrap" [ngClass]="{'translate-middle-x': progress < 80 && progress > 40}" [style]="40 > progress ? 'left: 0;' : ' right: 0;'">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias, ipsa.</span>
+                    <span class="current-timeline position-absolute bottom-100 text-white px-1 rounded text-nowrap">{{currentTimeline}}</span>
+               </div>
+               <div class="controls d-flex align-items-center">
+                    <button (click)="togglePlay()" class="play-paused-btn">
+                         <i class="fa-solid fa-play"></i>
+                         <i class="fa-solid fa-pause"></i>
+                    </button>
+                    <div class="volume-container d-flex align-items-center">
+                         <button (click)="toggleMute()" class="mute-btn">
+                              <i class="fa-solid fa-volume-high volume-high-icon d-none"></i>
+                              <i class="fa-solid fa-volume-low volume-low-icon d-none"></i>
+                              <i class="fa-solid fa-volume-xmark volume-muted-icon d-none"></i>
+                         </button>
+                         <input #volumeSlider (input)="slideVolume()" class="volume-slider" type="range" min="0" max="1" step="any" value="1">
+                    </div>
+                    <div class="duration-container d-flex align-items-center flex-grow-1">
+                         <div class="current-time">{{currentTime}}</div>/<div class="total-time">{{totalTime}}</div>
+                    </div>
+                    <button (click)="downloadVideo()" class="download-video-btn">
+                         <i class="fa-solid fa-download"></i>
+                    </button>
+                    <button class="dropdown-toggle caption-btn shadow-none border-0 rounded-0" data-bs-toggle="dropdown" aria-expanded="false">
+                         <i class="fa-solid fa-closed-captioning"></i>
+                    </button>
+                    <ul class="dropdown-menu p-0 text-center text-white mb-3">
+                         <li [ngClass]="{'active': currentLabel === subtitle.label}" (click)="getCaptions(subtitle.label)" *ngFor="let subtitle of subtitles">{{subtitle.label}}</li>
+                         <li [ngClass]="{'active': currentLabel === 'off'}" (click)="getCaptions('off')">Off</li>
+                    </ul>
+                    <button class="dropdown-toggle wide shadow-none border-0 rounded-0" data-bs-toggle="dropdown" aria-expanded="false">{{playbackRate}}X</button>
+                    <ul class="dropdown-menu p-0 text-center text-white mb-3">
+                         <li [ngClass]="{'active': playbackRate === .25}" (click)="changePlaybackSpeed(.25)">0.25</li>
+                         <li [ngClass]="{'active': playbackRate === .5}" (click)="changePlaybackSpeed(.5)">0.5</li>
+                         <li [ngClass]="{'active': playbackRate === .75}" (click)="changePlaybackSpeed(.75)">0.75</li>
+                         <li [ngClass]="{'active': playbackRate === 1}" (click)="changePlaybackSpeed(1)">Normal</li>
+                         <li [ngClass]="{'active': playbackRate === 1.25}" (click)="changePlaybackSpeed(1.25)">1.25</li>
+                         <li [ngClass]="{'active': playbackRate === 1.5}" (click)="changePlaybackSpeed(1.5)">1.5</li>
+                         <li [ngClass]="{'active': playbackRate === 1.75}" (click)="changePlaybackSpeed(1.75)">1.75</li>
+                         <li [ngClass]="{'active': playbackRate === 2}" (click)="changePlaybackSpeed(2)">2</li>
+                    </ul>
+                    <button (click)="toggleFullScreenMode()" class="full-screen-btn">
+                         <i class="fa-solid fa-expand open"></i>
+                         <i class="fa-solid fa-compress close"></i>
+                    </button>
+               </div>
+          </div>
+          <video #video [ngClass]="{'intro-radius': isIntro}" class="w-100" (play)="isPlay = true" (pause)="isPlay = false" (progress)="bufferedVideo()" (volumechange)="changeVolume()" (loadeddata)="loadedVideo(); loadCaptions()" (timeupdate)="updateDuration()" preload="auto">
+               <source src="assets/videos/Bern.webm" type="video/webm">
+               <track kind="subtitles" label="Arabic" srclang="ar" src="assets/captions/Arabic.vtt" />
+               <track kind="subtitles" label="English" srclang="en" src="assets/captions/English.vtt" />
+               <track kind="subtitles" label="French" srclang="fr" src="assets/captions/French.vtt" />
+          </video>
+          <div *ngIf="isIntro" class="video-logo-intro position-absolute w-100 h-100 top-0 bottom-0 start-0 end-0 d-flex flex-column align-items-end"
+               [ngStyle]="{'background-image': 'linear-gradient(0deg, rgba(0, 0, 0, 0.50) 0%, rgba(0, 0, 0, 0.50) 100%), url(assets/images/video-poster.svg)'}">
+               <button (click)="downloadVideo()" class="btn btn-video-download position-relative shadow-none border-0 d-flex align-items-center justify-content-center">
+                    <span>تحميل</span>
+                    <i class="fa-solid fa-download text-white"></i>
+               </button>
+               <div class="position-absolute top-50 start-50 translate-middle text-center d-flex flex-column align-items-center justify-content-center">
+                    <h3>{{title}}</h3>
+                    <span (click)="togglePlay()" class="play-video-btn position-absolute top-50 start-50 translate-middle rounded-3 d-flex align-items-center justify-content-center">
+                         <i class="fa-solid fa-play text-white"></i>
+                    </span>
+               </div>
+          </div>
+     </div>
+</section>
